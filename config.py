@@ -12,7 +12,7 @@ class Config:
     BOT_UPTIME  = time.time()
     ADMIN_URL = "https://t.me/botskingdoms"
     START_PIC   = os.environ.get("START_PIC", "https://ibb.co/DH3N4Lyr")
-    LOG_CHANNEL = int(os.environ.get("LOG_CHANNEL", ""))
+    LOG_CHANNEL = int(os.environ.get("LOG_CHANNEL", "-1003842048266"))
     FORCE_SUB   = os.environ.get("FORCE_SUB", "") 
     FSUB_PIC = os.environ.get("FSUB_PIC", "")
     
