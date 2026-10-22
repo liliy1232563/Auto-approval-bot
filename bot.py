@@ -21,14 +21,13 @@ SUPPORT_CHAT = os.environ.get(
 PORT = int(Config.PORT)
 
 class Bot(Client):
-def init(self):
-super().init(
-"approver",
-api_id=Config.API_ID,
-api_hash=Config.API_HASH,
-bot_token=Config.BOT_TOKEN
-)
-
+    def __init__(self):
+        super().__init__(
+            "approver",
+            api_id=Config.API_ID,
+            api_hash=Config.API_HASH,
+            bot_token=Config.BOT_TOKEN
+        )
     self.start_time = time.time()
     self.web_runner = None
 
