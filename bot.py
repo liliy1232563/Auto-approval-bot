@@ -3,17 +3,21 @@ import time
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 
+import pyrogram.utils
+from aiohttp import web
 from pyrogram import Client
 from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup
-from aiohttp import web
 
 from config import Config
 from route import web_server
-import pyrogram.utils
 
 pyrogram.utils.MIN_CHANNEL_ID = -1002822095762
 
-SUPPORT_CHAT = os.environ.get("SUPPORT_CHAT", "@botskingdomschat")
+SUPPORT_CHAT = os.environ.get(
+"SUPPORT_CHAT",
+"@botskingdomschat"
+)
+
 PORT = int(Config.PORT)
 
 class Bot(Client):
@@ -24,7 +28,9 @@ api_id=Config.API_ID,
 api_hash=Config.API_HASH,
 bot_token=Config.BOT_TOKEN
 )
-self.start_time = time.time()
+
+    self.start_time = time.time()
+    self.web_runner = None
 
 async def start(self):
     await super().start()
@@ -35,10 +41,25 @@ async def start(self):
     self.uptime = Config.BOT_UPTIME
 
     if Config.WEBHOOK:
-        runner = web.AppRunner(await web_server())
-        await runner.setup()
-        site = web.TCPSite(runner, "0.0.0.0", PORT)
-        await site.start()
+        try:
+            app = await web_server()
+            self.web_runner = web.AppRunner(app)
+
+            await self.web_runner.setup()
+
+            site = web.TCPSite(
+                self.web_runner,
+                "0.0.0.0",
+                PORT
+            )
+
+            await site.start()
+            print(f"Web server started on port {PORT}")
+
+        except Exception as e:
+            print(f"Web server startup failed: {e}")
+            await super().stop()
+            raise
 
     print(f"{me.first_name} Is Started.....✨️")
 
@@ -56,7 +77,8 @@ async def start(self):
                 photo=Config.START_PIC,
                 caption=(
                     "**I ʀᴇsᴛᴀʀᴛᴇᴅ ᴀɢᴀɪɴ!**\n\n"
-                    f"ɪ ʜᴀᴠᴇ ʙᴇᴇɴ ʀᴜɴɴɪɴɢ ғᴏʀ: `{uptime_string}`\n"
+                    f"ɪ ʜᴀᴠᴇ ʙᴇᴇɴ ʀᴜɴɴɪɴɢ ғᴏʀ: "
+                    f"`{uptime_string}`\n"
                     f"📅 Date: `{date}`\n"
                     f"🕒 Time: `{time_str}`"
                 ),
@@ -71,7 +93,18 @@ async def start(self):
             )
 
         except Exception as e:
-            print(f"Failed to send message in chat {chat_id}: {e}")
+            print(
+                f"Failed to send message in chat "
+                f"{chat_id}: {e}"
+            )
+
+async def stop(self, *args):
+    try:
+        if self.web_runner is not None:
+            await self.web_runner.cleanup()
+            self.web_runner = None
+    finally:
+        await super().stop(*args)
 
 if name == "main":
 Bot().run()
