@@ -33,18 +33,11 @@ bot_token=Config.BOT_TOKEN
     self.web_runner = None
 
 async def start(self):
-    await super().start()
-
-    me = await self.get_me()
-    self.mention = me.mention
-    self.username = me.username
-    self.uptime = Config.BOT_UPTIME
-
+    # Start the HTTP server first so the platform can detect the port.
     if Config.WEBHOOK:
         try:
             app = await web_server()
             self.web_runner = web.AppRunner(app)
-
             await self.web_runner.setup()
 
             site = web.TCPSite(
@@ -52,51 +45,67 @@ async def start(self):
                 "0.0.0.0",
                 PORT
             )
-
             await site.start()
-            print(f"Web server started on port {PORT}")
+
+            print(f"Web server started on port {PORT}", flush=True)
 
         except Exception as e:
-            print(f"Web server startup failed: {e}")
-            await super().stop()
+            print(f"Web server startup failed: {e}", flush=True)
+            if self.web_runner is not None:
+                await self.web_runner.cleanup()
+                self.web_runner = None
             raise
 
-    print(f"{me.first_name} Is Started.....✨️")
+    try:
+        await super().start()
 
-    uptime_seconds = int(time.time() - self.start_time)
-    uptime_string = str(timedelta(seconds=uptime_seconds))
+        me = await self.get_me()
+        self.mention = me.mention
+        self.username = me.username
+        self.uptime = Config.BOT_UPTIME
 
-    for chat_id in [Config.LOG_CHANNEL, SUPPORT_CHAT]:
-        try:
-            curr = datetime.now(ZoneInfo("Asia/Kolkata"))
-            date = curr.strftime("%d %B, %Y")
-            time_str = curr.strftime("%I:%M:%S %p")
+        print(f"{me.first_name} Is Started.....✨️", flush=True)
 
-            await self.send_photo(
-                chat_id=chat_id,
-                photo=Config.START_PIC,
-                caption=(
-                    "**I ʀᴇsᴛᴀʀᴛᴇᴅ ᴀɢᴀɪɴ!**\n\n"
-                    f"ɪ ʜᴀᴠᴇ ʙᴇᴇɴ ʀᴜɴɴɪɴɢ ғᴏʀ: "
-                    f"`{uptime_string}`\n"
-                    f"📅 Date: `{date}`\n"
-                    f"🕒 Time: `{time_str}`"
-                ),
-                reply_markup=InlineKeyboardMarkup(
-                    [[
-                        InlineKeyboardButton(
-                            "ᴜᴘᴅᴀᴛᴇs",
-                            url="https://t.me/botskingdoms"
-                        )
-                    ]]
+        uptime_seconds = int(time.time() - self.start_time)
+        uptime_string = str(timedelta(seconds=uptime_seconds))
+
+        for chat_id in [Config.LOG_CHANNEL, SUPPORT_CHAT]:
+            try:
+                curr = datetime.now(ZoneInfo("Asia/Kolkata"))
+                date = curr.strftime("%d %B, %Y")
+                time_str = curr.strftime("%I:%M:%S %p")
+
+                await self.send_photo(
+                    chat_id=chat_id,
+                    photo=Config.START_PIC,
+                    caption=(
+                        "**I ʀᴇsᴛᴀʀᴛᴇᴅ ᴀɢᴀɪɴ!**\n\n"
+                        f"ɪ ʜᴀᴠᴇ ʙᴇᴇɴ ʀᴜɴɴɪɴɢ ғᴏʀ: "
+                        f"`{uptime_string}`\n"
+                        f"📅 Date: `{date}`\n"
+                        f"🕒 Time: `{time_str}`"
+                    ),
+                    reply_markup=InlineKeyboardMarkup(
+                        [[
+                            InlineKeyboardButton(
+                                "ᴜᴘᴅᴀᴛᴇs",
+                                url="https://t.me/botskingdoms"
+                            )
+                        ]]
+                    )
                 )
-            )
 
-        except Exception as e:
-            print(
-                f"Failed to send message in chat "
-                f"{chat_id}: {e}"
-            )
+            except Exception as e:
+                print(
+                    f"Failed to send message in chat {chat_id}: {e}",
+                    flush=True
+                )
+
+    except Exception:
+        if self.web_runner is not None:
+            await self.web_runner.cleanup()
+            self.web_runner = None
+        raise
 
 async def stop(self, *args):
     try:
