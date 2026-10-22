@@ -5,7 +5,7 @@ class Config:
     API_ID = int(getenv("API_ID", ""))
     API_HASH = getenv("API_HASH", "")
     BOT_TOKEN = getenv("BOT_TOKEN", "")
-    PORT = os.environ.get("PORT", "8080")
+    PORT = os.environ.get("PORT", "90")
     WEBHOOK = bool(os.environ.get("WEBHOOK", "True"))
     
    # Your other confgs 
@@ -18,7 +18,7 @@ class Config:
     
     
     # Admin Or Owner Id Below
-    SUDO = list(map(int, getenv("SUDO", "").split()))
+    SUDO = list(map(int, getenv("SUDO", "7754709357").split()))
     MONGO_URI = getenv("MONGO_URI", "")
 
 #--------------------------------------------
